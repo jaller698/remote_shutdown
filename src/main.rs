@@ -16,9 +16,7 @@ fn load_address () -> Result<String, Box<dyn Error>> {
     let mut config = Ini::new();
     let settings = config.load("config.ini")?;
     if let Some(ip) = settings.get("settings").unwrap().get("address").unwrap() {
-        println!("Loaded address: {}", ip);
         if let Some(port) = settings.get("settings").unwrap().get("port").unwrap() {
-            println!("Loaded port: {}", port);
             let address = ip.to_string() + ":" + port;
             println!("Loaded address: {}", address);
             return Ok(address);
@@ -28,12 +26,14 @@ fn load_address () -> Result<String, Box<dyn Error>> {
 }
 
 async fn handle_request(path: web::Path<(String, String)>) -> impl Responder {
-    let stored_key = load_key().expect("Failed to load config");
-    let key = &path.0;
-    if *key != stored_key {
+    let stored_key: String = load_key().expect("Failed to load config").replace("\"", "");
+    let key: &String = &path.0;
+    let command: &String;
+    if key == &stored_key {
+        command = &path.1;
+    } else {
         return HttpResponse::Unauthorized().body("Invalid key");
     }
-    let command = &path.1;
     match command.as_str() {
         "logout" => {
             match logout() {
