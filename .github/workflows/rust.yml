@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     branches:
-      - main  # Or whatever branch you want to trigger the workflow
+      - master
 
 jobs:
   build:
