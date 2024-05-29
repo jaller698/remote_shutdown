@@ -7,25 +7,44 @@ SERVICE_DESCRIPTION="Service for remote shutdown functionality"
 # Get the current directory
 CURRENT_DIR=$(pwd)
 
+EXE_DIR="/usr/local/bin"
+CONFIG_DIR="/etc/remote_shutdown"
+
 # Define the path to the executable
 EXE_PATH="$CURRENT_DIR/remote_shutdown"
+WORKING_DIR="$CURRENT_DIR"
 
 # Validate the executable path
 if [ ! -x "$EXE_PATH" ]; then
     echo "Error: The executable remote_shutdown was not found or is not executable in the current directory: $CURRENT_DIR"
-    exit 1
+    EXE_PATH="$CURRENT_DIR/target/release/remote_shutdown"
+    WORKING_DIR="$CURRENT_DIR/target/release"
+    if [ ! -x "$EXE_PATH" ]; then
+        echo "Error: The executable remote_shutdown was not found or is not executable in the target directory: $CURRENT_DIR"
+        exit 1
+    fi
 fi
+
+cp $EXE_PATH $EXE_DIR
+sudo mkdir -p $CONFIG_DIR
+cp "config.ini" $CONFIG_DIR
+
+EXE_PATH="$EXE_DIR/remote_shutdown"
+CONFIG_PATH="$CONFIG_DIR/config.ini"
 
 # Define the systemd service unit file
 SERVICE_UNIT="[Unit]
 Description=$SERVICE_DESCRIPTION
+After=network.target
 
 [Service]
 ExecStart=$EXE_PATH
+WorkingDirectory=$WORKING_DIR
 Restart=always
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=$SERVICE_NAME
+Environment=CONFIG_PATH=$CONFIG_PATH
 
 [Install]
 WantedBy=multi-user.target"
