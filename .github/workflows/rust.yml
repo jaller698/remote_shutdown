@@ -1,16 +1,33 @@
-  - name: Rust Release
-  # You may pin to the exact commit or the version.
-  # uses: manoadamro/rust-release@028b5d008bac5437257ec3ec905b12aed11e766a
-  uses: manoadamro/rust-release@v1
-  with:
-    # Github Repo Owner
-    owner: 
-    # Github Repo
-    repo: 
-    # Github Token
-    token: 
-    # Cargo.toml path
-    cargo: # default is Cargo.toml
-    # do not actually create release
-    dry_run: # default is false
-          
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: master
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          # (optional) Path to changelog.
+          changelog: CHANGELOG.md
+          # (required) GitHub token for creating GitHub Releases.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
+          # Note that glob pattern is not supported yet.
+          bin: ...
+          # (required) GitHub token for uploading assets to GitHub Releases.
+          token: ${{ secrets.GITHUB_TOKEN }}
